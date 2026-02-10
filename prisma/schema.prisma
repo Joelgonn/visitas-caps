@@ -28,3 +28,11 @@ model Visita {
   pacienteId    Int
   paciente      Paciente @relation(fields: [pacienteId], references: [id])
 }
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  email     String   @unique
+  senha     String   // Senha criptografada
+  cargo     String   @default("recepcionista") 
+  createdAt DateTime @default(now())
+}
