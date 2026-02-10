@@ -70,7 +70,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <div className="bg-blue-600 p-2 rounded-xl text-white"><ClipboardList /></div>
             <div>
-              <h1 className="text-lg font-black uppercase tracking-tighter">Hospital Visitas</h1>
+              <h1 className="text-lg font-black uppercase tracking-tighter">Caps III Visitas</h1>
               <div className="flex gap-4 mt-1">
                 <Link href="/dashboard/usuarios" className="text-[10px] font-bold text-slate-400 hover:text-blue-600 flex items-center gap-1 uppercase transition">
                   <Users size={12} /> Gerenciar Equipe
