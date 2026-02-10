@@ -4,26 +4,15 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcrypt";
 
-// ADICIONE ESTA FUNÇÃO NOVAMENTE PARA O BUILD PASSAR
-export async function criarUsuarioMestre() {
-  try {
-    const emailMestre = "admin@hospital.com";
-    const existe = await prisma.usuario.findUnique({ where: { email: emailMestre } });
-    if (existe) return { success: true, message: "Usuário mestre já existe!" };
-
-    const senhaCripto = await bcrypt.hash("admin123", 10);
-    await prisma.usuario.create({
-      data: { nome: "Admin", email: emailMestre, senha: senhaCripto, cargo: "admin" }
-    });
-    return { success: true, message: "Usuário criado!" };
-  } catch (e) {
-    return { success: false, message: "Erro ao criar." };
-  }
+// Interface padrão para retornos das ações
+interface ActionResponse {
+  success: boolean;
+  error?: string | null;
+  data?: any;
 }
 
 /** --- SEÇÃO: PACIENTES --- **/
 
-// Busca apenas pacientes que ainda estão internados
 export async function getPacientesInternados() {
   return await prisma.paciente.findMany({
     where: { situacao: "Internado" },
@@ -31,35 +20,43 @@ export async function getPacientesInternados() {
   });
 }
 
-// Registra uma nova internação
-export async function internarPaciente(nome: string, quarto: string, leito: string) {
-  const novo = await prisma.paciente.create({
-    data: { nome, quarto, leito, situacao: "Internado" }
-  });
-  revalidatePath("/dashboard");
-  return novo;
+export async function internarPaciente(nome: string, quarto: string, leito: string): Promise<ActionResponse> {
+  try {
+    const novo = await prisma.paciente.create({
+      data: { nome, quarto, leito, situacao: "Internado" }
+    });
+    revalidatePath("/dashboard");
+    return { success: true, data: novo };
+  } catch (e) {
+    return { success: false, error: "Erro ao internar paciente." };
+  }
 }
 
-// Dar alta ao paciente (muda status para não aparecer mais na busca de visitas)
-export async function darAltaPaciente(id: number) {
-  await prisma.paciente.update({
-    where: { id },
-    data: { situacao: "Alta" }
-  });
-  revalidatePath("/dashboard");
+export async function darAltaPaciente(id: number): Promise<ActionResponse> {
+  try {
+    await prisma.paciente.update({
+      where: { id },
+      data: { situacao: "Alta" }
+    });
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: "Erro ao dar alta." };
+  }
 }
 
 /** --- SEÇÃO: VISITAS --- **/
 
-export async function registrarVisita(pacienteId: number, nome: string, doc: string) {
-  await prisma.visita.create({
-    data: {
-      pacienteId,
-      visitanteNome: nome,
-      visitanteDoc: doc
-    }
-  });
-  revalidatePath("/dashboard");
+export async function registrarVisita(pacienteId: number, nome: string, doc: string): Promise<ActionResponse> {
+  try {
+    await prisma.visita.create({
+      data: { pacienteId, visitanteNome: nome, visitanteDoc: doc }
+    });
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: "Erro ao registrar visita." };
+  }
 }
 
 export async function getVisitasRecentes() {
@@ -89,11 +86,31 @@ export async function getUsuarios() {
   });
 }
 
-export async function cadastrarUsuario(nome: string, email: string, senhaPura: string, cargo: string) {
-  const senhaCripto = await bcrypt.hash(senhaPura, 10);
-  await prisma.usuario.create({
-    data: { nome, email, senha: senhaCripto, cargo }
-  });
-  revalidatePath("/dashboard/usuarios");
-  return { success: true };
+export async function cadastrarUsuario(nome: string, email: string, senhaPura: string, cargo: string): Promise<ActionResponse> {
+  try {
+    const senhaCripto = await bcrypt.hash(senhaPura, 10);
+    await prisma.usuario.create({
+      data: { nome, email, senha: senhaCripto, cargo }
+    });
+    revalidatePath("/dashboard/usuarios");
+    return { success: true, error: null };
+  } catch (error) {
+    return { success: false, error: "E-mail já cadastrado ou erro no servidor." };
+  }
+}
+
+// Mantida apenas para compatibilidade de build, se necessário
+export async function criarUsuarioMestre(): Promise<ActionResponse> {
+  try {
+    const emailMestre = "admin@hospital.com";
+    const existe = await prisma.usuario.findUnique({ where: { email: emailMestre } });
+    if (existe) return { success: true, error: null };
+    const senhaCripto = await bcrypt.hash("admin123", 10);
+    await prisma.usuario.create({
+      data: { nome: "Admin", email: emailMestre, senha: senhaCripto, cargo: "admin" }
+    });
+    return { success: true, error: null };
+  } catch (e) {
+    return { success: false, error: "Erro no setup." };
+  }
 }
