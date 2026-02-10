@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Aqui ele vai ler a URL que você colou no arquivo .env
+  url      = env("POSTGRES_PRISMA_URL")
+}
+
+// Tabela de Pacientes
+model Paciente {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  quarto    String
+  leito     String
+  situacao  String   @default("Internado")
+  visitas   Visita[]
+  createdAt DateTime @default(now())
+}
+
+// Tabela de Visitas
+model Visita {
+  id            Int      @id @default(autoincrement())
+  visitanteNome String
+  visitanteDoc  String
+  dataHora      DateTime @default(now())
+  pacienteId    Int
+  paciente      Paciente @relation(fields: [pacienteId], references: [id])
+}
